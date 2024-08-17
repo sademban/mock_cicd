@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && contains(github.ref, 'refs/heads/release/')) }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') || (github.event_name == 'pull_request' && startsWith(github.event.pull_request.base.ref, 'refs/heads/release/')) }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
