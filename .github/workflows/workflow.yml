@@ -1,5 +1,5 @@
 name: mock CI/CD
- 
+
 on:
   push:
     branches:
@@ -7,49 +7,76 @@ on:
   pull_request:
     branches:
       - 'release/*'
- 
+    types:
+      - closed
+
 jobs:
-  build:
+  build_feature:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') || (github.event_name == 'pull_request' && startsWith(github.event.pull_request.base.ref, 'refs/heads/release/')) }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
- 
+
     - name: Get commit message
       run: |
         echo "Commit message: $(git log -1 --pretty=%B)" > commit_message.txt
- 
+
     - name: Display commit message
       run: cat commit_message.txt
- 
+
     - name: Create build artifact
       run: |
         echo "Mock build complete."
         mv commit_message.txt file_build.txt
- 
+
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
       with:
         name: build
         path: file_build.txt
- 
-  deploy:
+
+  build_release:
     runs-on: ubuntu-latest
-    needs: build
+    if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.base.ref, 'refs/heads/release/') }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
- 
+
+    - name: Get commit message
+      run: |
+        echo "Commit message: $(git log -1 --pretty=%B)" > commit_message.txt
+
+    - name: Display commit message
+      run: cat commit_message.txt
+
+    - name: Create build artifact
+      run: |
+        echo "Mock build complete."
+        mv commit_message.txt file_build.txt
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: build
+        path: file_build.txt
+
+  deploy_release:
+    runs-on: ubuntu-latest
+    needs: build_release
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Download build artifact
       uses: actions/download-artifact@v3
       with:
         name: build
         path: .
- 
+
     - name: Rename build artifact
       run: mv file_build.txt file_deploy.txt
- 
+
     - name: Upload deploy artifact
       uses: actions/upload-artifact@v3
       with:
